@@ -281,7 +281,7 @@ def register():
             return jsonify(errno=RET.DATAEXIST,errmsg='邮箱已注册')
     # 保存用户信息
     user = User()
-    user.mobile = '18772845363'
+    # user.mobile = '18772845363'
     user.email = email
     user.nick_name = email
     # 实际上调用了模型类中的password方法，实现了密码加密存储，generate_password_hash
@@ -345,12 +345,23 @@ def login():
         db.session.rollback()
         return jsonify(errno=RET.DBERR, errmsg='保存数据失败')
     # 缓存用户信息
-    # session['user_id'] = user.id
-    # session['email'] = email
-    # session['nick_name'] = user.nick_name
-    session['user'] = user
+    session['user_id'] = user.id
+    session['email'] = email
+    session['nick_name'] = user.nick_name
+    # session['user'] = user
     # 返回结果
     return jsonify(errno=RET.OK, errmsg='登录成功')
+
+
+@passport_blue.route('/logout')
+def logout():
+    """退出登录"""
+    # 本质是清除用户在服务器缓存的用户信息
+    session.pop('user_id',None)
+    session.pop('mobile',None)
+    session.pop('nick_name',None)
+    return jsonify(errno=RET.OK,errmsg='OK')
+
 
 
 

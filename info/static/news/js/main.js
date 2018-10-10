@@ -364,3 +364,10 @@ function generateUUID() {
     });
     return uuid;
 }
+
+// 退出登录
+function logout(){
+    $.get('/logout',function(resp){
+        location.reload()
+    })
+}

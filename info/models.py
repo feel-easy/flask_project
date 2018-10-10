@@ -34,7 +34,7 @@ class User(BaseModel, db.Model):
     nick_name = db.Column(db.String(32), unique=True, nullable=False)  # 用户昵称
     email = db.Column(db.String(50),unique=True,nullable=False) # 用户email
     password_hash = db.Column(db.String(128), nullable=False)  # 加密的密码
-    mobile = db.Column(db.String(11),unique=True)  # 手机号
+    mobile = db.Column(db.String(11))  # 手机号
     avatar_url = db.Column(db.String(256))  # 用户头像路径
     last_login = db.Column(db.DateTime, default=datetime.now)  # 最后一次登录时间
     is_admin = db.Column(db.Boolean, default=False)
