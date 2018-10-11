@@ -28,6 +28,8 @@ redis_store = StrictRedis(host=Config.REDIS_HOST,port=Config.REDIS_PORT,decode_r
 
 # 先实例化sqlalchemy对象
 db = SQLAlchemy()
+# 导入flask_wtf扩展提供的csrf保护功能
+from flask_wtf import CSRFProtect,csrf
 
 # 定义工厂函数，让函数根据参数的不同，生产不同环境下的app，即开发模式下的app，或生产模式下的app
 def create_app(config_name):
@@ -37,6 +39,21 @@ def create_app(config_name):
     # 让sqlalchemy对象通过函数调用，实现和程序实例app进行关联
     db.init_app(app)
     Session(app)
+    # 后端服务器开启csrf保护,不仅会验证请求方法POST/PUT/DELETE/PATCH/，
+    # 还会验证请求头中是否设置了X-CSRFToken
+    # csrf_token = 'asdfasdfas'
+    CSRFProtect(app)
+
+    # 生成csrf_token
+    # respose = make_response()
+    # response.set_cookie('csrf_token',csrf_token)
+    @app.after_request
+    def after_request(response):
+        csrf_token = csrf.generate_csrf()
+        # 把csrf_token设置到客户端浏览器的cookie中
+        response.set_cookie('csrf_token', csrf_token)
+        return response
+
 
     # 导入蓝图对象，注册蓝图对象
     from info.modules.news import news_blue

@@ -125,6 +125,9 @@ $(function(){
             url:'/login',
             type:'post',
             data:JSON.stringify(params),
+            headers:{
+                'X-CSRFToken':getCookie('csrf_token')
+            },
             contentType:'application/json',
             success:function (resp) {
                 if (resp.errno == '0'){
@@ -186,6 +189,9 @@ $(function(){
             url:'/register',
             type:'post',
             data:JSON.stringify(params),
+            headers:{
+                'X-CSRFToken':getCookie('csrf_token')
+            },
             contentType:'application/json',
             success:function (resp) {
                 if (resp.errno == '0'){
@@ -240,6 +246,9 @@ function sendEmail() {
         url:'/email_code',
         type:'post',
         data:JSON.stringify(params),
+        headers:{
+                'X-CSRFToken':getCookie('csrf_token')
+            },
         contentType:'application/json',
         success:function (response) {
             if (response.errno == '0'){
@@ -301,6 +310,9 @@ function sendSMSCode() {
         url:'/sms_code',
         type:'post',
         data:JSON.stringify(params),
+        headers:{
+                'X-CSRFToken':getCookie('csrf_token')
+            },
         contentType:'application/json',
         success:function (response) {
             if (response.errno == '0'){

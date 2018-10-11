@@ -129,7 +129,7 @@ def send_email():
     # 使用email 发送验证码
 
     try:
-        em = SendEmail([email], str(sms_code))
+        em = SendEmail(email, str(sms_code))
         ret = em.send()
     except Exception as e:
         current_app.logger.error(e)
