@@ -52,7 +52,7 @@ def index():
         'category_list': [category.to_dict() for category in categories]
     }
 
-    return render_template('news/index.html',data=data)
+    return render_template('news/index.html', data=data)
 
 
 # 项目favicon.ico文件的加载
@@ -85,29 +85,29 @@ def get_news_list():
     :return:
     """
     # 获取参数
-    cid = request.args.get('cid','1')
-    page = request.args.get('page','1')
-    per_page = request.args.get('per_page','10')
+    cid = request.args.get('cid', '1')
+    page = request.args.get('page', '1')
+    per_page = request.args.get('per_page', '10')
     # 转换参数的数据类型
     try:
-        cid,page,per_page = int(cid),int(page),int(per_page)
+        cid, page, per_page = int(cid), int(page), int(per_page)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.PARAMERR,errmsg='参数格式错误')
+        return jsonify(errno=RET.PARAMERR, errmsg='参数格式错误')
     # 定义容器，存储查询的过滤条件
     filters = []
     # 判断分类id如果不是最新
     if cid > 1:
         filters.append(News.category_id == cid)
     # 使用过滤条件查询mysql，按照新闻发布时间排序
-    print(filters)
+    # print(filters)
     try:
         # *filters表示python中拆包，News.category_id==cid，*filters里面存储的是sqlalchemy对象
         # 在python中测试添加的数据为True或False
-        paginate = News.query.filter(*filters).order_by(News.create_time.desc()).paginate(page,per_page,False)
+        paginate = News.query.filter(*filters).order_by(News.create_time.desc()).paginate(page, per_page, False)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.DBERR,errmsg='查询新闻数据失败')
+        return jsonify(errno=RET.DBERR, errmsg='查询新闻数据失败')
     # 获取分页后的数据
     news_list = paginate.items
     total_page = paginate.pages
@@ -117,9 +117,58 @@ def get_news_list():
     for news in news_list:
         news_dict_list.append(news.to_dict())
     data = {
-        'news_dict_list':news_dict_list,
-        'total_page':total_page,
-        'current_page':current_page
+        'news_dict_list': news_dict_list,
+        'total_page': total_page,
+        'current_page': current_page
     }
     # 返回数据
-    return jsonify(errno=RET.OK,errmsg='OK',data=data)
+    return jsonify(errno=RET.OK, errmsg='OK', data=data)
+
+
+@news_blue.route('/<int:news_id>')
+@login_required
+def get_news_detail(news_id):
+    """
+    新闻详情
+        用户数据展示
+        点击排行展示
+        新闻数据展示
+    :param news_id:
+    :return:
+    """
+    # 从登录验证装饰器中获取用户信息
+    user = g.user
+    # 新闻点击排行
+    try:
+        news_list = News.query.order_by(News.clicks.desc()).limit(constants.CLICK_RANK_MAX_NEWS)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg='查询新闻排行数据失败')
+    if not news_list:
+        return jsonify(errno=RET.NODATA, errmsg='无新闻排行数据')
+    news_click_list = []
+    for news in news_list:
+        news_click_list.append(news.to_dict())
+
+    # 新闻详情数据
+    try:
+        news = News.query.get(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg='查询新闻详情数据失败')
+    if not news:
+        return jsonify(errno=RET.NODATA, errmsg='无新闻详情数据')
+    # 收藏或取消收藏的标记
+    is_collected = False
+    # 判断用户是否收藏过,用户登录后才能显示该新闻是否收藏
+    if user:
+        if news in user.collection_news:
+            is_collected = True
+    data = {
+        'user_info': user.to_dict() if user else None,
+        'news_click_list': news_click_list,
+        'news_detail': news.to_dict(),
+        'is_collected': is_collected
+    }
+
+    return render_template('news/detail.html', data=data)
