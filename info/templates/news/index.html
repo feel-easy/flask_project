@@ -14,12 +14,9 @@
         <div class="header">
             <a href="#" class="logo fl"><img src="../../static/news/images/logo.png" alt="logo"></a>
             <ul class="menu fl">
-                <li class="active" data-cid="0"><a href="javascript:;">最新</a></li>
-                <li data-cid="1"><a href="javascript:;">股市</a></li>
-                <li data-cid="2"><a href="javascript:;">债市</a></li>
-                <li data-cid="3"><a href="javascript:;">商品</a></li>
-                <li data-cid="4"><a href="javascript:;">外汇</a></li>
-                <li data-cid="5"><a href="javascript:;">公司</a></li>
+                {% for category in data.category_list %}
+                    <li class="{% if loop.index0 == 0 %}active{% endif %}" data-cid="{{ category.id }}"><a href="javascript:;">{{ category.name }}</a></li>
+                {% endfor %}
             </ul>
            {% if data.user_info %}
                 <!-- 用户登录后显示下面，隐藏上面 -->
@@ -58,12 +55,10 @@
                 <h3>点击排行</h3>
             </div>
             <ul class="rank_list">
-                <li><span class="first">1</span><a href="#">势如破竹！人民币再度连闯四道关口 在岸、离岸双双升破6.42</a></li>
-                <li><span class="second">2</span><a href="#">凛冬已至，还有多少银行人在假装干银行</a></li>
-                <li><span class="third">3</span><a href="#">人民日报：部分城市楼市放松限制引关注，楼市调控不会“拉抽屉”</a></li>
-                <li><span>4</span><a href="#">势如破竹！人民币再度连闯四道关口 在岸、离岸双双升破6.42</a></li>
-                <li><span>5</span><a href="#">凛冬已至，还有多少银行人在假装干银行</a></li>
-                <li><span>6</span><a href="#">人民日报：部分城市楼市放松限制引关注，楼市调控不会“拉抽屉”</a></li>
+
+                {% for news in data.news_click_list %}
+                    <li><span class="{{ loop.index0 | index_filter }}">{{ loop.index }}</span><a href="#">{{ news.title }}</a></li>
+                {% endfor %}
             </ul>
         </div>
     </div>

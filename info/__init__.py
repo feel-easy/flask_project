@@ -53,7 +53,10 @@ def create_app(config_name):
         # 把csrf_token设置到客户端浏览器的cookie中
         response.set_cookie('csrf_token', csrf_token)
         return response
+        # 使用自定义的过滤器
 
+    from info.utils.commons import index_filter
+    app.add_template_filter(index_filter, 'index_filter')
 
     # 导入蓝图对象，注册蓝图对象
     from info.modules.news import news_blue

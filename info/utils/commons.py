@@ -5,7 +5,7 @@ from info.models import User
 
 
 # 自定义过滤器
-def index_class(index):
+def index_filter(index):
     if index == 1:
         return 'first'
     elif index == 2:
