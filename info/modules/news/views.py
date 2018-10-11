@@ -172,3 +172,73 @@ def get_news_detail(news_id):
     }
 
     return render_template('news/detail.html', data=data)
+
+
+@news_blue.route("/news_collect",methods=['POST'])
+@login_required
+def news_collect():
+    """
+    新闻收藏和取消收藏
+    1、获取参数，news_id,action[collect,cancel_collect]
+    2、检查参数的完整性
+    3、转换news_id参数的数据类型
+    4、检查action参数的范围
+    5、查询mysql确认新闻的存在
+    6、校验查询结果
+    7、判断用户选择的是收藏，还要判断用户之前未收藏过
+    user.collection_news.append(news)
+    如果是取消收藏
+    user.collection_news.remove(news)
+    8、提交数据mysql
+    9、返回结果
+
+
+    :return:
+    """
+    # 从登录验证装饰器中获取用户信息
+    user = g.user
+    # 判断用户是否登录
+    if not user:
+        return jsonify(errno=RET.SESSIONERR,errmsg='用户未登录')
+
+    news_id = request.json.get('news_id')
+    action = request.json.get('action')
+    # 检查参数的完整性
+    if not all([news_id,action]):
+        return jsonify(errno=RET.PARAMERR,errmsg='参数不完整')
+    # 转换newsid数据类型
+    try:
+        news_id = int(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.PARAMERR,errmsg='参数类型错误')
+    # 检查action参数的范围
+    if action not in ['collect','cancel_collect']:
+        return jsonify(errno=RET.PARAMERR,errmsg='参数范围错误')
+    # 根据新闻id查询数据
+    try:
+        news = News.query.get(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR,errmsg='查询数据失败')
+    # 判断查询结果
+    if not news:
+        return jsonify(errno=RET.NODATA,errmsg='无新闻数据')
+    # 如果用户选择的是收藏
+    if action == 'collect':
+        # 该新闻用户之前未收藏
+        if news not in user.collection_news:
+            user.collection_news.append(news)
+    else:
+        user.collection_news.remove(news)
+    # 提交数据
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(errno=RET.DBERR,errmsg='保存数据失败')
+    # 返回结果
+    return jsonify(errno=RET.OK,errmsg='OK')
+

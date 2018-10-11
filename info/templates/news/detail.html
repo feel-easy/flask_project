@@ -5,7 +5,14 @@
 {% block scriptBlock %}
     <script type="text/javascript" src="../../static/news/js/detail.js"></script>
 {% endblock %}
-
+{% block headerBlock %}
+    <ul class="menu fl">
+        {% for category in data.category_list %}
+            <li class="{% if loop.index0 == 0 %}active{% endif %}" data-cid="{{ category.id }}"><a
+                    href="javascript:;">{{ category.name }}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}
 {% block contentBlock %}
     <div class="detail_con fl">
         <h3>{{ data.news_detail.title }}</h3>

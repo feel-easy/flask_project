@@ -13,6 +13,7 @@
         {% for category in data.category_list %}
             <li class="{% if loop.index0 == 0 %}active{% endif %}" data-cid="{{ category.id }}"><a
                     href="javascript:;">{{ category.name }}</a></li>
+
         {% endfor %}
     </ul>
 {% endblock %}

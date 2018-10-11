@@ -3,7 +3,6 @@ from flask import session, current_app, g
 from info.models import User
 
 
-
 # 自定义过滤器
 def index_filter(index):
     if index == 1:
