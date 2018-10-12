@@ -3,11 +3,11 @@ import uuid
 from . import profile_blue
 from info.utils.commons import login_required
 from info.utils.response_code import RET
-from info import db,constants
+from info import db, constants
 # 导入阿里云
 from info.utils.image_storage import storage
 # 导入模型类
-from info.models import Category,News
+from info.models import Category, News
 
 
 @profile_blue.route("/info")
@@ -26,12 +26,12 @@ def user_info():
     if not user:
         return redirect('/')
     data = {
-        'user_info':user.to_dict()
+        'user_info': user.to_dict()
     }
-    return render_template('news/user.html',data=data)
+    return render_template('news/user.html', data=data)
 
 
-@profile_blue.route("/base_info",methods=['GET','POST'])
+@profile_blue.route("/base_info", methods=['GET', 'POST'])
 @login_required
 def base_info():
     """
@@ -56,7 +56,6 @@ def base_info():
     """
     user = g.user
     if request.method == 'GET':
-
         data = {
             'user': user.to_dict()
         }
@@ -66,11 +65,11 @@ def base_info():
     signature = request.json.get('signature')
     gender = request.json.get('gender')
     # 检查参数
-    if not all([nick_name,signature,gender]):
-        return jsonify(errno=RET.PARAMERR,errmsg='参数缺失')
+    if not all([nick_name, signature, gender]):
+        return jsonify(errno=RET.PARAMERR, errmsg='参数缺失')
     # 校验性别参数范围
-    if gender not in ['MAN','WOMAN']:
-        return jsonify(errno=RET.PARAMERR,errmsg='参数范围错误')
+    if gender not in ['MAN', 'WOMAN']:
+        return jsonify(errno=RET.PARAMERR, errmsg='参数范围错误')
     # 保存用户信息
     user.nick_name = nick_name
     user.signature = signature
@@ -82,14 +81,14 @@ def base_info():
     except Exception as e:
         current_app.logger.error(e)
         db.session.rollback()
-        return jsonify(errno=RET.DBERR,errmsg='保存数据失败')
+        return jsonify(errno=RET.DBERR, errmsg='保存数据失败')
     # 修改redis缓存中的用户信息
     session['nick_name'] = nick_name
     # 返回结果
-    return jsonify(errno=RET.OK,errmsg='OK')
+    return jsonify(errno=RET.OK, errmsg='OK')
 
 
-@profile_blue.route("/pic_info",methods=['GET','POST'])
+@profile_blue.route("/pic_info", methods=['GET', 'POST'])
 @login_required
 def save_avatar():
     """
@@ -100,8 +99,7 @@ def save_avatar():
     文件对象：具有读写方法的对象
     2、检查参数
     3、读取文件对象
-    4、调用七牛云，上传头像，保存七牛云返回的图片名称
-    name = storage(image)
+    4、调用阿里云，上传头像
     5、保存用户头像数据，提交到mysql中是图片名称
     6、拼接图片的完整的绝对路径
     外链域名+图片名称：http://p8m0n4bb5.bkt.clouddn.com/图片名称
@@ -112,28 +110,23 @@ def save_avatar():
     user = g.user
     if request.method == 'GET':
         data = {
-            'user':user.to_dict()
+            'user': user.to_dict()
         }
-        return render_template('news/user_pic_info.html',data=data)
+        return render_template('news/user_pic_info.html', data=data)
     # 获取文件参数
     avatar = request.files.get('avatar')
     # 检查参数
     if not avatar:
-        return jsonify(errno=RET.PARAMERR,errmsg='参数错误')
+        return jsonify(errno=RET.PARAMERR, errmsg='参数错误')
     # # 读取图片数据，转换成bytes类型
-    # try:
-    #     image_data = avatar.read()
-    # except Exception as e:
-    #     current_app.logger.error(e)
-    #     return jsonify(errno=RET.PARAMERR,errmsg='参数格式错误')
-    # # 调用七牛云，上传图片,
+
     try:
-        file_name = str(uuid.uuid1())+"_" + avatar.filename
+        file_name = str(uuid.uuid1()) + "_" + avatar.filename
         image_name = storage(avatar.read(), file_name)
         # print(image_name)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=RET.THIRDERR,errmsg='上传图片失败')
+        return jsonify(errno=RET.THIRDERR, errmsg='上传图片失败')
     # 保存图片文件的名称到mysql数据库中
     user.avatar_url = image_name
     # 提交数据
@@ -143,17 +136,17 @@ def save_avatar():
     except Exception as e:
         current_app.logger.error(e)
         db.session.rollback()
-        return jsonify(errno=RET.DBERR,errmsg='保存数据失败')
+        return jsonify(errno=RET.DBERR, errmsg='保存数据失败')
     # 拼接图片的绝对路径，返回前端
     avatar_url = constants.IMG_DOMIN_PREFIX + image_name
     data = {
-        'avatar_url':avatar_url
+        'avatar_url': avatar_url
     }
     # 返回数据
-    return jsonify(errno=RET.OK,errmsg='OK',data=data)
+    return jsonify(errno=RET.OK, errmsg='OK', data=data)
 
 
-@profile_blue.route('/news_release',methods=['GET','POST'])
+@profile_blue.route('/news_release', methods=['GET', 'POST'])
 @login_required
 def news_release():
     """
@@ -163,74 +156,109 @@ def news_release():
     """
     user = g.user
     if not user:
-        return jsonify(errno=RET.SESSIONERR,errmsg='用户未登录')
+        return jsonify(errno=RET.SESSIONERR, errmsg='用户未登录')
 
     if request.method == 'GET':
         try:
             category_list = Category.query.all()
         except Exception as e:
             current_app.logger.error(e)
-            return jsonify(errno=RET.DBERR,errmsg='查询新闻分类数据失败')
+            return jsonify(errno=RET.DBERR, errmsg='查询新闻分类数据失败')
         # 判断查询结果
         if not category_list:
-            return jsonify(errno=RET.NODATA,errmsg='无新闻分类数据')
+            return jsonify(errno=RET.NODATA, errmsg='无新闻分类数据')
         categories = []
         for category in category_list:
             categories.append(category.to_dict())
         # 移除最新
         categories.pop(0)
         data = {
-            'categories':categories
+            'categories': categories
         }
-        return render_template('news/user_news_release.html',data=data)
+        return render_template('news/user_news_release.html', data=data)
+    else:
+        # 如果不是get请求，获取参数,title,category_id,digest,index_image,content
+        title = request.form.get('title')
+        category_id = request.form.get('category_id')
+        digest = request.form.get('digest')
+        content = request.form.get('content')
+        index_image = request.files.get('index_image')
+        # 检查参数的完整性
+        if not all([title, category_id, digest,index_image,content]):
+            return jsonify(errno=RET.PARAMERR, errmsg='参数缺失')
+        # 转换新闻分类数据类型
+        try:
+            category_id = int(category_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=RET.PARAMERR, errmsg='参数类型错误')
+        # 读取图片数据
+        try:
+            image_data = index_image.read()
+            imgname = "IMG" + str(uuid.uuid1()) + "_" + index_image.filename
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=RET.PARAMERR, errmsg='参数格式错误')
 
-    # 如果不是get请求，获取参数,title,category_id,digest,index_image,content
-    title = request.form.get('title')
-    category_id = request.form.get('category_id')
-    digest = request.form.get('digest')
-    index_image = request.files.get('index_image')
-    content = request.form.get('content')
-    # 检查参数的完整性
-    if not all([title,category_id,digest,index_image,content]):
-        return jsonify(errno=RET.PARAMERR,errmsg='参数缺失')
-    # 转换新闻分类数据类型
-    try:
-        category_id = int(category_id)
-    except Exception as e:
-        current_app.logger.error(e)
-        return jsonify(errno=RET.PARAMERR,errmsg='参数类型错误')
-    # 读取图片数据
-    try:
-        image_data = index_image.read()
-    except Exception as e:
-        current_app.logger.error(e)
-        return jsonify(errno=RET.PARAMERR,errmsg='参数格式错误')
-    # 调用七牛云上传图片
-    try:
-        image_name = storage(image_data)
-    except Exception as e:
-        current_app.logger.error(e)
-        return jsonify(errno=RET.THIRDERR,errmsg='上传图片失败')
-    # 保存新闻数据
-    news = News()
-    news.category_id = category_id
-    news.user_id = user.id
-    news.source = '个人发布'
-    news.title = title
-    news.digest = digest
+        try:
+            image_name = storage(image_data, imgname)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=RET.THIRDERR, errmsg='上传图片失败')
+        # 保存新闻数据
+        news = News()
+        news.category_id = category_id
+        news.user_id = user.id
+        news.source = '个人发布'
+        news.title = title
+        news.digest = digest
 
-    # news.index_image_url = index_image
-    # 新闻图片应该存储的是图片的绝对路径,让新闻图片和新闻内容是一个整体。
-    news.index_image_url = constants.QINIU_DOMIN_PREFIX + image_name
-    news.content = content
-    news.status = 1
-    # 提交数据
+        # news.index_image_url = index_image
+        # 新闻图片应该存储的是图片的绝对路径,让新闻图片和新闻内容是一个整体。
+        news.index_image_url = constants.IMG_DOMIN_PREFIX + image_name
+        news.content = content
+        news.status = 1
+        # 提交数据
+        try:
+            db.session.add(news)
+            db.session.commit()
+        except Exception as e:
+            current_app.logger.error(e)
+            db.session.rollback()
+            return jsonify(errno=RET.DBERR, errmsg='保存数据失败')
+        # 返回结果
+        return jsonify(errno=RET.OK, errmsg='OK')
+
+
+@profile_blue.route('/news_list')
+@login_required
+def news_list():
+    # 获取页数
+    p = request.args.get("p", 1)
     try:
-        db.session.add(news)
-        db.session.commit()
+        p = int(p)
     except Exception as e:
         current_app.logger.error(e)
-        db.session.rollback()
-        return jsonify(errno=RET.DBERR,errmsg='保存数据失败')
-    # 返回结果
-    return jsonify(errno=RET.OK,errmsg='OK')
+        p = 1
+
+    user = g.user
+    news_li = []
+    current_page = 1
+    total_page = 1
+    try:
+        paginate = News.query.filter(News.user_id == user.id).paginate(p, constants.USER_COLLECTION_MAX_NEWS, False)
+        # 获取当前页数据
+        news_li = paginate.items
+        # 获取当前页
+        current_page = paginate.page
+        # 获取总页数
+        total_page = paginate.pages
+    except Exception as e:
+        current_app.logger.error(e)
+
+    news_dict_li = []
+
+    for news_item in news_li:
+        news_dict_li.append(news_item.to_review_dict())
+    data = {"news_list": news_dict_li, "total_page": total_page, "current_page": current_page}
+    return render_template('news/user_news_list.html', data=data)
