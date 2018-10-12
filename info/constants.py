@@ -4,8 +4,9 @@ IMAGE_CODE_REDIS_EXPIRES = 300
 # 短信验证码Redis有效期，单位：秒
 SMS_CODE_REDIS_EXPIRES = 300
 
-# 七牛空间域名
-QINIU_DOMIN_PREFIX = "http://oyucyko3w.bkt.clouddn.com/"
+
+# 头像空间域名
+IMG_DOMIN_PREFIX = "http://loulouimg.wangshenglei.top/"
 
 # 首页展示最多的新闻数量
 HOME_PAGE_MAX_NEWS = 10
@@ -29,9 +30,6 @@ ADMIN_USER_PAGE_MAX_COUNT = 10
 ADMIN_NEWS_PAGE_MAX_COUNT = 10
 
 
-from_addr = 'm17683946064@163.com'
-password = 'QQA520'
-to_addr = '867869344@qq.com'
-smtp_server = 'smtp.163.com'
+
 
 

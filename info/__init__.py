@@ -61,5 +61,7 @@ def create_app(config_name):
     app.register_blueprint(news_blue)
     from info.modules.passport import passport_blue
     app.register_blueprint(passport_blue)
+    from info.modules.profile import profile_blue
+    app.register_blueprint(profile_blue)
 
     return app
